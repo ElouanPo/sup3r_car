@@ -11,6 +11,7 @@ from ev3dev2.sound import Sound
 from time import sleep
 
 
+
 class LineFollower:
     """
     Une classe représentant notre suiveur de ligne.
