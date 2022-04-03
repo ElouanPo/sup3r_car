@@ -36,20 +36,20 @@ class LineFollower:
         """
         return (self.light+self.dark)//2
 
-    ###############################################
-    #
-    #  PARTIE CALIBRATION DU CAPTEUR
-    #
-    ###############################################
     def speak(self, message, display = True):
         """
         Speak the message.
         if display is True, print the message
         """
-        self.sound.speak(message, espeak_opts = self.voice_options)
         if display:
             print(message)
+        self.sound.speak(message, espeak_opts = self.voice_options)
 
+    ###############################################
+    #
+    #  PARTIE CALIBRATION DU CAPTEUR
+    #
+    ###############################################
     def calibrate(self):
         """
         Launch the calibration of the color sensor
