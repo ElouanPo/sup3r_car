@@ -20,23 +20,19 @@ class Motorization:
     def run(self, speed, angle = 0):
         """Fait tourner les moteurs
 
-        Args:
+        Arguments:
             speed (int): un nombre compris entre -100 et 100
-            angle (int, optional): L'angle des roues avant. Defaults to 0.
+            angle (int, optional): L'angle des roues avant. Par défaut 0.
         """
-        speed = - speed
-        for angle in range(-40, 41, 1):
-            print("angle: "+str(angle))
-            compute = self.track_width*tan(angle * pi / 180)/(2*self.wheelbase)
-            speed_left = (1 + compute)*speed
-            speed_right = (1 - compute)*speed
-            print(str(speed_left) + "-<" + str(speed) + "->" + str(speed_right))
-            self.lm.on(speed=SpeedDPS(speed_left), block=False)
-            self.rm.on(speed=SpeedDPS(speed_right), block=False)
-            sleep(0.1)
-        sleep(2)
+        speed = - speed #sinon marche arrière
+        compute = self.track_width*tan(angle * pi / 180)/(2*self.wheelbase) # voir le fichier geogebra
+        speed_left = (1 + compute)*speed
+        speed_right = (1 - compute)*speed
+        self.lm.on(speed=SpeedDPS(0.7*speed_left*1050/100), block=False) # 1050 is the max RPM for large motor, 70% of this is set to max
+        self.rm.on(speed=SpeedDPS(0.7*speed_right*1050/100), block=False)
+        
+    def stop(self):
+        """Stop the motorization
+        """
         self.lm.off()
         self.rm.off()
-
-motors = Motorization()
-motors.run(500)
