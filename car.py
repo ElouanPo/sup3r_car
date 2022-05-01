@@ -12,7 +12,8 @@ from time import sleep
 
 # Appels des autres classes
 from motorization import Motorization
-from direction import Direction
+from steering import Steering
+from PID import PID
 
 
 
@@ -22,7 +23,7 @@ class Car:
     """
     # Constructor
     def __init__(self, name = ''):
-        self.name = name
+        self._name = name
         self.btn = Button()
         self.leds = Leds()
         self.sound = Sound()
@@ -32,16 +33,28 @@ class Car:
         self.light = None               # Initialisation de la partie claire à None
         self.dark = None                # Initialisation de la partie foncée à None
         # motorization
-        self.motorization = Motorization()
+        self._motorization = Motorization(self)
+        self.pid = PID(1, 0, 0)
         
-        # direction
-        self.direction = Direction()
+        # steering
+        self._steering = Steering(self)
         
     def set_name(self, name):
         """
         Set the name of the follower
         """
         self.name = name
+
+    def get_name(self):
+        """Return the name of the car
+        """
+        return self._name
+
+    def get_motorization(self):
+        return self._motorization
+
+    def get_steering(self):
+        return self._steering
 
     def get_threshold(self):
         """
@@ -58,6 +71,21 @@ class Car:
         if display:
             print(message)
         self.sound.speak(message, espeak_opts = self.voice_options)
+
+    def launch(self):
+        if not self.get_threshold():
+            self.calibrate()
+        self.pid.SetPoint = self.get_threshold()
+        while True:
+            feedback = self.cs.reflected_light_intensity
+            self.pid.update(feedback)
+            output = self.pid.output
+            print(output)
+            self.get_steering().turn(output)
+            sleep(0.01)
+
+
+    
 
     ###############################################
     #
@@ -94,8 +122,8 @@ class Car:
             self.btn.on_left = calibrate_dark
             self.btn.process()
             sleep(0.01)
-        if self.name:
-            self.speak("Calibration de " + self.name + " terminée")
+        if self.get_name():
+            self.speak("Calibration de " + self.get_name() + " terminée")
         else:
             self.speak("Calibration terminée")
         self.speak("La valeur de consigne est "+str(self.get_threshold()))
