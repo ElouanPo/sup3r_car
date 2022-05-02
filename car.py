@@ -72,17 +72,16 @@ class Car:
             print(message)
         self.sound.speak(message, espeak_opts = self.voice_options)
 
-    def launch(self):
+    def launch(self, speed = 100):
         if not self.get_threshold():
             self.calibrate()
         self.pid.SetPoint = self.get_threshold()
         while True:
+            self.get_motorization().run(speed)
             feedback = self.cs.reflected_light_intensity
             self.pid.update(feedback)
             output = self.pid.output
-            print(output)
-            self.get_steering().turn(output)
-            sleep(0.01)
+            self.get_steering().turn(output, speed=30)
 
 
     

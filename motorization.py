@@ -38,30 +38,31 @@ class Motorization:
     def get_track_width(self):
         return self._track_width
 
-    def run(self, speed):
-        """Fait tourner les moteurs
+    def run(self, speed, differential = True):
+        """Run the two rear motors
 
         Arguments:
             speed (int): un nombre compris entre -100 et 100
+            differential (boolean) : If set to False the motors will always rotate at the same speed
         """
-        speed = -speed #sinon marche arrière
+        speed = -speed # otherwise get backwards
         if speed > 100 : speed = 100
         elif speed < -100 : speed = -100
-
-        angle = self.get_car().get_steering().get_angle()
-        compute = self.get_track_width()*tan(angle * pi / 180)/(2*self.get_wheelbase()) # voir le fichier geogebra
-        speed_left = (1 - compute)*speed/100
-        speed_right = (1 + compute)*speed/100
-
-        if speed_right > 1 or speed_right < -1:
-            divider = abs(speed_right)
-        elif speed_left > 1 or speed_left < -1:
-            divider = abs(speed_left)
-        else:
-            divider = 1
+        speed_left = speed_right = speed
+        divider = 1
+        if differential:
+            angle = self.get_car().get_steering().get_angle()
+            compute = self.get_track_width()*tan(angle * pi / 180)/(2*self.get_wheelbase()) # voir le fichier geogebra
+            speed_left = (1 - compute)*speed
+            speed_right = (1 + compute)*speed
+            # The speed cant be more than possible
+            if speed_right > 100 or speed_right < -100:
+                divider = abs(speed_right/100)
+            elif speed_left > 100 or speed_left < -100:
+                divider = abs(speed_left/100)
         
-        self.get_left_motor().on(speed=SpeedDPS(speed_left*1040/divider), block=False) # 1050 is the max RPM for large motor
-        self.get_right_motor().on(speed=SpeedDPS(speed_right*1040/divider), block=False)
+        self.get_left_motor().on(speed=SpeedDPS((speed_left/100)*(1040/divider)), block=False) # 1050 is the max RPM for large motor
+        self.get_right_motor().on(speed=SpeedDPS((speed_right/100)*(1040/divider)), block=False)
         
     def stop(self):
         """Stop the motorization
