@@ -14,10 +14,15 @@ class Steering:
         self._car = car
         self._angle = 0
         self._max_angle = 40
+        self._steering_divider = 1
 
     def get_angle(self):
         """Return the steering angle."""
         return self._angle
+
+    def get_max_angle(self):
+        """Return the maximum steering angle."""
+        return self._max_angle
 
     def set_max_angle(self, angle):
         """Set the max angle the steering motor can handle.
@@ -31,7 +36,7 @@ class Steering:
         """Return the car instance the steering is attached to."""
         return self._car
         
-    def turn(self, angle, speed=50):
+    def turn(self, angle, speed=100):
         """
         Tourne le moteur de direction à la position 'angle'. Angle positif à droite, négatif à gauche
         La valeur par défaut de la vitesse de rotation est 50.

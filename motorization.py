@@ -51,8 +51,10 @@ class Motorization:
         speed_left = speed_right = speed
         divider = 1
         if differential:
-            angle = self.get_car().get_steering().get_angle()
-            compute = self.get_track_width()*tan(angle * pi / 180)/(2*self.get_wheelbase()) # voir le fichier geogebra
+            steering = self.get_car().get_steering()
+            motor_angle = steering.get_angle()
+            wheel_angle = motor_angle/steering._steering_divider
+            compute = self.get_track_width()*tan(wheel_angle * pi / 180)/(2*self.get_wheelbase()) # voir le fichier geogebra
             speed_left = (1 - compute)*speed
             speed_right = (1 + compute)*speed
             # The speed cant be more than possible
