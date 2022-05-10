@@ -8,7 +8,9 @@ from ev3dev2.button import Button
 from ev3dev2.led import Leds 
 from ev3dev2.sound import Sound
 # Import time
-from time import sleep
+import time
+import json
+
 
 # Appels des autres classes
 from motorization import Motorization
@@ -35,6 +37,7 @@ class Car:
         # motorization
         self._motorization = Motorization(self)
         self._pid = PID(0, 0, 0)
+        self._plots = {}
         
         # steering
         self._steering = Steering(self)
@@ -75,16 +78,33 @@ class Car:
             print(message)
         self.sound.speak(message, espeak_opts = self.voice_options)
 
-    def launch(self, speed = 100):
+    def launch(self, speed = 100, measures = True):
+        pid = self.get_pid()
+        cs = self.cs
         if not self.get_threshold():
             self.calibrate()
-        self.get_pid().SetPoint = self.get_threshold()
-        while True:
-            self.get_motorization().run(speed)
-            feedback = self.cs.reflected_light_intensity
-            self.get_pid().update(feedback)
-            output = self.get_pid().output
-            self.get_steering().turn(output, speed=30)
+        pid.SetPoint = self.get_threshold()
+        self.get_motorization().run(speed)
+        if measures:
+            self._plots['Kp'] = self.get_pid().Kp
+            self._plots['Ki'] = self.get_pid().Ki
+            self._plots['Kd'] = self.get_pid().Kd
+            self._plots['threshold'] = self.get_threshold()
+            self._plots['datas'] = []
+        for i in range(1000):
+            feedback = cs.reflected_light_intensity
+            if measures:
+                now = time.time()
+                self._plots['datas'].append((now, feedback))
+            pid.update(feedback)
+            self.get_steering().turn(pid.output, speed=100)
+        
+        with open('json_data.json', 'w') as outfile:
+            json_string = json.dumps(self._plots)
+            json.dump(json_string, outfile)
+
+        self.get_motorization().stop()
+
 
 
     ###############################################
@@ -137,9 +157,9 @@ class Car:
             while not max_angle:
                 angle = int(input("Entrez l'angle de rotation du moteur de direction : "))
                 self.get_steering().turn(angle)
-                sleep(1)
+                time.sleep(1)
                 self.get_steering().turn(-angle)
-                sleep(1)
+                time.sleep(1)
                 self.get_steering().turn(0)
                 new_angle = input("Voulez vous tester un nouvel angle (Y/n)? : ")
                 if new_angle == 'N' or new_angle == 'n':
@@ -152,7 +172,7 @@ class Car:
             print("Mesurer l'angle de braquage des roues")
             print("Angle zéro : ")
             steering.turn(0)
-            sleep(1)
+            time.sleep(1)
             print("Angle maximal de rotation du moteur de direction : " + str(max_angle) )
             steering.turn(max_angle)
             print("Mesurer l'angle de rotation roues.")
@@ -250,65 +270,15 @@ class Car:
         while self.light == None:
             self.btn.on_left = calibrate_light
             self.btn.process()
-            sleep(0.01)
+            time.sleep(0.01)
         print("Mettez le capteur de couleur sur la partie foncée et appuyez sur le bouton gauche pour demarrer.")
         self.dark = None
         while self.dark == None:
             self.btn.on_left = calibrate_dark
             self.btn.process()
-            sleep(0.01)
+            time.sleep(0.01)
         if self.get_name():
             self.speak("Calibration de " + self.get_name() + " terminée")
         else:
             self.speak("Calibration terminée")
         self.speak("La valeur de consigne est "+str(self.get_threshold()))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ###############################################
-    #
-    #  NE PAS UTILISER CES FONCTIONS
-    #
-    ###############################################
-
-
-    def _calibrate_zone(self, zone):
-        """
-        Calibration de la zone.
-        zone : 1 pour la partie claire, 0 pour la partie foncée
-        """
-        self.leds.all_off()
-        measures = []
-        for i in range(5):
-            self.leds.set_color('RIGHT', 'GREEN')
-            sleep(0.2)
-            measure = self.cs.reflected_light_intensity
-            print(measure)
-            measures.append(measure)
-            self.leds.set_color('RIGHT', 'BLACK')
-            sleep(0.2)
-        # calcul de la moyenne des mesures
-        average = int(sum(measures)/len(measures))
-        # Partie claire
-        if zone == 1:
-            self.light = average
-            message = "Partie claire : "+str(self.light)
-        # Partie foncée
-        elif zone == 0:
-            self.dark = average
-            message = "Partie foncée : "+str(self.dark)
-        self.speak(message)
-
