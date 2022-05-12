@@ -3,7 +3,7 @@
 
 # Import the EV3-robot library
 from ev3dev2.motor import MediumMotor, LargeMotor
-from ev3dev2.sensor.lego import ColorSensor, UltrasonicSensor
+from ev3dev2.sensor.lego import ColorSensor, UltrasonicSensor, TouchSensor
 from ev3dev2.button import Button
 from ev3dev2.led import Leds 
 from ev3dev2.sound import Sound
@@ -34,6 +34,8 @@ class Car:
         self.cs = ColorSensor()
         self.light = None               # Initialisation de la partie claire à None
         self.dark = None                # Initialisation de la partie foncée à None
+        # Touch Sensor
+        self._touch_sensor = TouchSensor()
         # motorization
         self._motorization = Motorization(self)
         self._pid = PID(0, 0, 0)
@@ -44,9 +46,9 @@ class Car:
         
     def set_name(self, name):
         """
-        Set the name of the follower
+        Set the name of the car
         """
-        self.name = name
+        self._name = name
 
     def get_name(self):
         """Return the name of the car
@@ -54,17 +56,24 @@ class Car:
         return self._name
 
     def get_motorization(self):
+        """Return the instance of the motorization"""
         return self._motorization
 
     def get_steering(self):
+        """Return the instance of the steering"""
         return self._steering
 
+    def get_touch_sensor(self):
+        """Return the instance of the touch sensor"""
+        return self._touch_sensor
+
     def get_pid(self):
+        """Return the instance of the PID"""
         return self._pid
 
     def get_threshold(self):
         """
-        Retourne la valeur de consigne, None si non calculable
+        Return the threshold value, None if not set
         """
         if self.light and self.dark:
             return (self.light+self.dark)//2
@@ -78,11 +87,15 @@ class Car:
             print(message)
         self.sound.speak(message, espeak_opts = self.voice_options)
 
-    def launch(self, speed = 100, measures = True):
+    def launch(self, speed = 100, measures = False):
+        """
+        Launch the line follower
+        """
         pid = self.get_pid()
         cs = self.cs
-        if not self.get_threshold():
-            self.calibrate()
+        touch_sensor = self.get_touch_sensor()
+        #if not self.get_threshold():
+        #    self.calibrate()
         pid.SetPoint = self.get_threshold()
         self.get_motorization().run(speed)
         if measures:
@@ -91,7 +104,7 @@ class Car:
             self._plots['Kd'] = self.get_pid().Kd
             self._plots['threshold'] = self.get_threshold()
             self._plots['datas'] = []
-        for i in range(1000):
+        while not touch_sensor.is_pressed:
             feedback = cs.reflected_light_intensity
             if measures:
                 now = time.time()
@@ -217,13 +230,22 @@ class Car:
             set_PID = False
             while not set_PID:
                 kp = input("Entrer la valeur du KP [%s] : "%(self.get_pid().Kp))
-                kp = float(kp)
+                if kp == '':
+                    kp = self.get_pid().Kp
+                else:
+                    kp = float(kp)
                 self.get_pid().Kp = kp
                 ki = input("Entrer la valeur du KI [%s] : "%(self.get_pid().Ki))
-                ki = float(ki)
+                if ki == '':
+                    ki = self.get_pid().Ki
+                else:
+                    ki = float(ki)
                 self.get_pid().Ki = ki
                 kd = input("Entrer la valeur du KD [%s] : "%(self.get_pid().Kd))
-                kd = float(kd)
+                if kd == '':
+                    kd = self.get_pid().Kd
+                else:
+                    kd = float(kd)
                 self.get_pid().Kd = kd
                 answer_pid = input("Voulez vous reconfigurer le PID (Y/n)? : ")
                 if answer_pid == 'N' or answer_pid == 'n':
@@ -239,7 +261,7 @@ class Car:
             print(char + ' : ' +description)
         choix = input("Votre choix : ")
         if choix == 'U' or choix == 'u':
-            self.stop()
+            self.get_motorization().stop()
             self.configure()
         elif choix == '1':
             speed = int(input("Entrer la vitesse entre 0 et 100 : "))
@@ -282,3 +304,30 @@ class Car:
         else:
             self.speak("Calibration terminée")
         self.speak("La valeur de consigne est "+str(self.get_threshold()))
+
+    def _calibrate_zone(self, zone):
+        """
+        Calibration de la zone.
+        zone : 1 pour la partie claire, 0 pour la partie foncée
+        """
+        self.leds.all_off()
+        measures = []
+        for i in range(5):
+            self.leds.set_color('RIGHT', 'GREEN')
+            time.sleep(0.2)
+            measure = self.cs.reflected_light_intensity
+            print(measure)
+            measures.append(measure)
+            self.leds.set_color('RIGHT', 'BLACK')
+            time.sleep(0.2)
+        # calcul de la moyenne des mesures
+        average = int(sum(measures)/len(measures))
+        # Partie claire
+        if zone == 1:
+            self.light = average
+            message = "Partie claire : "+str(self.light)
+        # Partie foncée
+        elif zone == 0:
+            self.dark = average
+            message = "Partie foncée : "+str(self.dark)
+        self.speak(message)
