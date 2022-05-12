@@ -97,7 +97,6 @@ class Car:
         #if not self.get_threshold():
         #    self.calibrate()
         pid.SetPoint = self.get_threshold()
-        self.get_motorization().run(speed)
         if measures:
             self._plots['Kp'] = self.get_pid().Kp
             self._plots['Ki'] = self.get_pid().Ki
@@ -111,6 +110,7 @@ class Car:
                 self._plots['datas'].append((now, feedback))
             pid.update(feedback)
             self.get_steering().turn(pid.output, speed=100)
+            self.get_motorization().run(speed)
         
         with open('json_data.json', 'w') as outfile:
             json_string = json.dumps(self._plots)
