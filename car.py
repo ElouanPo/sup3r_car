@@ -109,12 +109,14 @@ class Car:
                 now = time.time()
                 self._plots['datas'].append((now, feedback))
             pid.update(feedback)
+            print(pid.output)
             self.get_steering().turn(pid.output, speed=100)
             self.get_motorization().run(speed)
         
-        with open('json_data.json', 'w') as outfile:
-            json_string = json.dumps(self._plots)
-            json.dump(json_string, outfile)
+        if measures:
+            with open('json_data.json', 'w') as outfile:
+                json_string = json.dumps(self._plots)
+                json.dump(json_string, outfile)
 
         self.get_motorization().stop()
 
@@ -151,6 +153,7 @@ class Car:
                 self._run_line_follower()
             elif choix == 'Q' or choix == 'q':
                 quitter = True
+        print('Fin du programme')
 
 
     def _configure_steering(self):
@@ -218,54 +221,39 @@ class Car:
 
     def _configure_PID(self):
         print("--------------------------\nConfiguration du PID\n--------------------------\n")
-        liste = (('U',"Revenir au menu principal"),
-                 ('1',"Configuration du PID"),
-        )
-        for char, description in liste:
-            print(char + ' : ' +description)
-        choix = input("Votre choix : ")
-        if choix == 'U' or choix == 'u':
-            self.configure()
-        elif choix == '1':
-            set_PID = False
-            while not set_PID:
-                kp = input("Entrer la valeur du KP [%s] : "%(self.get_pid().Kp))
-                if kp == '':
-                    kp = self.get_pid().Kp
-                else:
-                    kp = float(kp)
-                self.get_pid().Kp = kp
-                ki = input("Entrer la valeur du KI [%s] : "%(self.get_pid().Ki))
-                if ki == '':
-                    ki = self.get_pid().Ki
-                else:
-                    ki = float(ki)
-                self.get_pid().Ki = ki
-                kd = input("Entrer la valeur du KD [%s] : "%(self.get_pid().Kd))
-                if kd == '':
-                    kd = self.get_pid().Kd
-                else:
-                    kd = float(kd)
-                self.get_pid().Kd = kd
-                answer_pid = input("Voulez vous reconfigurer le PID (Y/n)? : ")
-                if answer_pid == 'N' or answer_pid == 'n':
-                    set_PID = True
+        PID_OK = False
+        while not PID_OK:
+            kp = input("Entrer la valeur du KP  : [%s]"%(self.get_pid().Kp))
+            if kp == '':
+                kp = self.get_pid().Kp
+            else:
+                kp = float(kp)
+            self.get_pid().Kp = kp
+            ki = input("Entrer la valeur du KI : [%s]"%(self.get_pid().Ki))
+            if ki == '':
+                ki = self.get_pid().Ki
+            else:
+                ki = float(ki)
+            self.get_pid().Ki = ki
+            kd = input("Entrer la valeur du KD : [%s]"%(self.get_pid().Kd))
+            if kd == '':
+                kd = self.get_pid().Kd
+            else:
+                kd = float(kd)
+            self.get_pid().Kd = kd
+            answer_pid = input("Voulez vous reconfigurer le PID (y/N)? : ")
+            if answer_pid =='Y' or answer_pid =='y':
+                PID_OK = False
+            else:
+                PID_OK = True
+        
         self.configure()
 
     def _run_line_follower(self):
         print("--------------------------\nLancement du programme\n--------------------------\n")
-        liste = (('U',"Arreter la voiture et revenir au menu principal"),
-                 ('1',"Lancer le programme"),
-        )
-        for char, description in liste:
-            print(char + ' : ' +description)
-        choix = input("Votre choix : ")
-        if choix == 'U' or choix == 'u':
-            self.get_motorization().stop()
-            self.configure()
-        elif choix == '1':
-            speed = int(input("Entrer la vitesse entre 0 et 100 : "))
-            self.launch(speed)
+        speed = int(input("Entrer la vitesse entre 0 et 100 : "))
+        print("###### Press the touch sensor to stop the car ########.")
+        self.launch(speed)
 
     
 

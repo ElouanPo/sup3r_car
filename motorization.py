@@ -66,8 +66,8 @@ class Motorization:
                 divider = abs(speed_right/100)
             elif speed_left > 100 or speed_left < -100:
                 divider = abs(speed_left/100)
-        print("left : "+str((speed_left/100)*(1040/divider)))
-        print("right : "+str((speed_right/100)*(1040/divider)))
+        #print("left : "+str((speed_left/100)*(1040/divider)))
+        #print("right : "+str((speed_right/100)*(1040/divider)))
         self.get_left_motor().on(speed=SpeedDPS((speed_left/100)*(1040/divider)), block=False) # 1050 is the max RPM for large motor
         self.get_right_motor().on(speed=SpeedDPS((speed_right/100)*(1040/divider)), block=False)
         
