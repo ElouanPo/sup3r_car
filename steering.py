@@ -13,8 +13,8 @@ class Steering:
         self._motor = MediumMotor('outA'); # medium motor
         self._car = car
         self._angle = 0
-        self._max_angle = 40
-        self._steering_divider = 1
+        self._max_angle = 0
+        self._steering_divider = None
 
     def get_angle(self):
         """Return the steering angle."""
@@ -31,6 +31,11 @@ class Steering:
             angle (int): the maximum angle of the steering motor
         """
         self._max_angle = angle
+
+    def get_steering_divider(self):
+        """The divider is the division between the angle of the steering motor and the angle of the wheel
+        """
+        return self._steering_divider
 
     def get_car(self):
         """Return the car instance the steering is attached to."""
