@@ -14,7 +14,7 @@ class Steering:
         self._car = car
         self._angle = 0
         self._max_angle = 0
-        self._steering_divider = None
+        self._steering_divider = 1
 
     def get_angle(self):
         """Return the steering angle."""
