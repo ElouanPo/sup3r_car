@@ -59,8 +59,8 @@ class Motorization:
             motor_angle = steering.get_angle()
             wheel_angle = motor_angle/steering._steering_divider
             compute = self.get_track_width()*tan(wheel_angle * pi / 180)/(2*self.get_wheelbase()) # voir le fichier geogebra
-            speed_left = (1 + compute)*speed
-            speed_right = (1 - compute)*speed
+            speed_left = (1 - compute)*speed
+            speed_right = (1 + compute)*speed
             # The speed cant be more than possible
             if speed_right > 100 or speed_right < -100:
                 divider = abs(speed_right/100)
