@@ -102,7 +102,7 @@ class Car:
             pid.update(feedback)
             self.get_steering().turn(pid.output, speed=100)
         elapsed_time = time.time() - start
-        print("Durée : "+str(elapsed_time))
+        #print("Durée : "+str(elapsed_time))
         self.get_motorization().stop()
         with open('json_data.json', 'w') as outfile:
             json_string = json.dumps(self._plots)
