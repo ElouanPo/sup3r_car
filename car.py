@@ -95,6 +95,7 @@ class Car:
             self._plots['datas'] = []
         start = time.time()
         while not self.ts.is_pressed:
+            self.get_motorization().run(speed)
             feedback = cs.reflected_light_intensity
             if measures:
                 now = time.time()
